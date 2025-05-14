@@ -97,4 +97,4 @@ app.use((err, req, res, next) => {
 connectDB().then(() => {
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => console.log(`API running on port ${PORT}`));
-});
+});console.log("DEBUG: Using MongoDB version:", mongoose.version); 

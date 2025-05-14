@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Review = require('../models/Review');
 const Transaction = require('../models/Transaction');
 const requireAuth = require('../middleware/requireAuth');
@@ -8,207 +9,109 @@ const requireAuth = require('../middleware/requireAuth');
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { transactionId, rating, comment } = req.body;
-    console.log('==========================================');
-    console.log('REVIEW SUBMISSION REQUEST');
-    console.log('==========================================');
-    console.log('Request data:', { transactionId, rating, comment });
-    console.log('User data:', { 
-      id: req.user._id.toString(), 
-      roles: req.user.roles,
-      name: req.user.name
-    });
+    console.log('REVIEW SUBMISSION REQUEST:', { transactionId, rating, comment });
     
-    if (!transactionId) {
-      return res.status(400).json({ error: 'Transaction ID is required' });
-    }
+    // Basic validations
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+    if (!transactionId) return res.status(400).json({ error: 'Transaction ID is required' });
+    if (!rating) return res.status(400).json({ error: 'Rating is required' });
+    if (!comment) return res.status(400).json({ error: 'Comment is required' });
 
-    // Ensure reviewer ID is stored as a string for consistent comparison
-    const reviewer = req.user._id;
-    console.log('Reviewer ID:', reviewer.toString());
-
-    // Find the transaction
+    // Get user ID safely
+    const userId = req.user.id || (req.user._id ? req.user._id.toString() : null);
+    if (!userId) return res.status(400).json({ error: 'User ID not found' });
+    
+    // Find transaction
     const transaction = await Transaction.findById(transactionId);
-    console.log('Found transaction:', transaction);
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
     
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-
-    // Determine the reviewed company based on user ID matching transaction parties
-    const reviewerId = reviewer.toString();
-    const supplierIdStr = transaction.supplierId.toString();
-    const vendorIdStr = transaction.vendorId.toString();
+    // Extract transaction party IDs
+    const supplierId = transaction.supplierId.toString();
+    const vendorId = transaction.vendorId.toString();
     
-    let reviewedCompany;
+    // Determine role and reviewed company
     let isSupplier = false;
     let isVendor = false;
+    let reviewedCompanyId;
     
-    console.log('Comparing IDs to determine role in transaction:');
-    console.log('Reviewer ID:', reviewerId);
-    console.log('Supplier ID in transaction:', supplierIdStr);
-    console.log('Vendor ID in transaction:', vendorIdStr);
-    
-    // Check if user is supplier or vendor IN THIS TRANSACTION (not just by roles)
-    if (reviewerId === supplierIdStr) {
-      console.log('Reviewer is the supplier in this transaction');
-      reviewedCompany = transaction.vendorId;
+    if (userId === supplierId) {
       isSupplier = true;
-    } else if (reviewerId === vendorIdStr) {
-      console.log('Reviewer is the vendor in this transaction');
-      reviewedCompany = transaction.supplierId;
+      reviewedCompanyId = vendorId;
+    } else if (userId === vendorId) {
       isVendor = true;
+      reviewedCompanyId = supplierId;
     } else {
-      console.log('Reviewer is neither supplier nor vendor in this transaction');
       return res.status(403).json({ error: 'You are not a party to this transaction' });
     }
-
-    console.log('Reviewed company ID:', reviewedCompany);
-
-    // Check if transaction is in a state that allows reviews
+    
+    // Check if transaction is confirmed
     if (transaction.status !== 'confirmed') {
       return res.status(400).json({ error: 'Transaction must be confirmed to submit a review' });
     }
-
-    // IMPORTANT: The most reliable way to check if a user has already reviewed
-    // is to check the Review collection directly, not the transaction flags
-    console.log('==========================================');
-    console.log('CHECKING FOR EXISTING REVIEW - BY REVIEWER ID');
-    console.log('==========================================');
     
-    // The key fix: We ONLY care if THIS USER has already reviewed, not if the transaction has been reviewed by anyone
+    // Check for existing reviews with either field naming pattern
     const existingReview = await Review.findOne({
-      transaction: transactionId,
-      reviewer: reviewer // This checks if THIS specific user (by ID) has already reviewed
+      $or: [
+        // Check both possible field combinations to handle schema evolution
+        { transaction: transactionId, reviewer: userId },
+        { transactionId: transactionId, userId: userId }
+      ]
     });
-
+    
     if (existingReview) {
-      console.log('ERROR: User already has a review document for this transaction:', existingReview);
-      return res.status(400).json({ 
-        error: 'You have already reviewed this transaction',
-        reviewId: existingReview._id,
-        date: existingReview.createdAt
-      });
+      return res.status(400).json({ error: 'You have already reviewed this transaction' });
     }
     
-    // CRITICAL FIX: We will ONLY trust the Review collection to determine if a user has already reviewed
-    // Ignore the transaction flags for this check, as they might be inconsistent
-    
-    // We already checked for existing reviews in the Review collection above
-    // If we're here, there is no existing review from this user for this transaction
-    
-    // Just log the transaction flags for debugging
-    if (isSupplier && transaction.supplierReviewed) {
-      console.log('WARNING: Transaction indicates supplier has already reviewed, but no review document was found');
-      console.log('Will reset the supplierReviewed flag to match reality');
-      transaction.supplierReviewed = false;
-    }
-    
-    if (isVendor && transaction.vendorReviewed) {
-      console.log('WARNING: Transaction indicates vendor has already reviewed, but no review document was found');
-      console.log('Will reset the vendorReviewed flag to match reality');
-      transaction.vendorReviewed = false;
-    }
-    
-    console.log('No existing review found in the Review collection - user can proceed');
-    
-    // For debugging only: Check if transaction flags match what we expect
-    // But we'll rely on the Review document check above, not these flags
-    console.log('==========================================');
-    console.log('TRANSACTION FLAG STATUS (INFORMATIONAL ONLY)');
-    console.log('==========================================');
-    console.log('Transaction review flags:', {
-      supplierReviewed: transaction.supplierReviewed,
-      vendorReviewed: transaction.vendorReviewed
-    });
-    console.log('User role in transaction:', {
-      isSupplier,
-      isVendor,
-      userId: reviewerId,
-      supplierIdInTransaction: supplierIdStr,
-      vendorIdInTransaction: vendorIdStr
-    });
-    
-    // We'll continue regardless of what the flags say, since we checked the Review collection directly
-    console.log('Proceeding with review submission - Review collection check passed');
-    
-    console.log('Review status check passed:', {
-      isSupplier,
-      isVendor,
-      supplierReviewed: transaction.supplierReviewed,
-      vendorReviewed: transaction.vendorReviewed
-    });
-
-    // Create the review
+    // Create review document with BOTH field sets to handle schema mismatch
     const review = new Review({
-      reviewer: reviewer,
-      reviewedCompany: reviewedCompany,
+      // Current schema fields
+      reviewer: userId,
       transaction: transactionId,
-      rating: rating,
+      reviewedCompany: reviewedCompanyId,
+      
+      // Legacy fields that exist in DB indexes
+      userId: userId,
+      transactionId: transactionId,
+      
+      rating: Number(rating),
       comment: comment
     });
 
-    console.log('Saving review:', review);
-    await review.save();
-    console.log('Review saved successfully:', review);
+    console.log('Saving review:', {
+      reviewer: userId,
+      reviewedCompany: reviewedCompanyId,
+      transaction: transactionId,
+      rating: Number(rating)
+    });
+    
+    try {
+      await review.save();
+      console.log('Review saved successfully');
+    } catch (saveErr) {
+      console.error('Error saving review:', saveErr);
+      return res.status(500).json({ 
+        error: 'Failed to save review', 
+        message: saveErr.message
+      });
+    }
 
-    // Mark transaction as reviewed based on comparing reviewer ID with transaction parties
-    console.log('Setting review flags - reviewer ID:', reviewer);
-    console.log('Transaction supplier ID:', transaction.supplierId);
-    console.log('Transaction vendor ID:', transaction.vendorId);
+    // Update transaction review flags
+    console.log('Updating transaction flags');
     
-    // We already have isSupplier and isVendor determined correctly above
-    // No need to recalculate or compare IDs again
-    
-    console.log('Setting review flags based on previously determined role:', { 
-      isSupplier, 
-      isVendor,
-      currentSupplierReviewed: transaction.supplierReviewed,
-      currentVendorReviewed: transaction.vendorReviewed
-    });
-    
-    // IMPORTANT: Only update the flag for the specific user role
-    console.log('==========================================');
-    console.log('UPDATING REVIEW FLAGS');
-    console.log('==========================================');
-    console.log('Current flags before update:', {
-      supplierReviewed: transaction.supplierReviewed,
-      vendorReviewed: transaction.vendorReviewed
-    });
-    
-    // Use atomic update to prevent race conditions
+    // Set the appropriate flag based on user role
     if (isSupplier) {
-      console.log('User is SUPPLIER - updating supplierReviewed to TRUE');
-      // Explicitly ensure the flag is set to true
       transaction.supplierReviewed = true;
-      // DO NOT modify the vendor's flag
-      console.log('Vendor flag remains:', transaction.vendorReviewed);
     } else if (isVendor) {
-      console.log('User is VENDOR - updating vendorReviewed to TRUE');
-      // Explicitly ensure the flag is set to true
       transaction.vendorReviewed = true;
-      // DO NOT modify the supplier's flag
-      console.log('Supplier flag remains:', transaction.supplierReviewed);
-    } else {
-      console.log('ERROR: User is neither supplier nor vendor in this transaction');
-      return res.status(403).json({ error: 'You are not authorized to review this transaction' });
     }
     
-    console.log('Final flags after update:', {
-      supplierReviewed: transaction.supplierReviewed,
-      vendorReviewed: transaction.vendorReviewed
-    });
-    
-    // Log the transaction state before saving
-    console.log('Transaction before save:', {
-      id: transaction._id,
-      supplierReviewed: transaction.supplierReviewed,
-      vendorReviewed: transaction.vendorReviewed,
-      reviewerId,
-      supplierIdStr,
-      vendorIdStr
-    });
-    
-    await transaction.save();
+    try {
+      await transaction.save();
+      console.log('Transaction flags updated successfully');
+    } catch (saveErr) {
+      console.error('Error saving transaction flags:', saveErr);
+      // Continue with the review response even if flag update fails
+    }
 
     res.status(201).json(review);
   } catch (err) {
@@ -217,7 +120,12 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'You have already reviewed this transaction' });
     }
     console.error('Review submission error:', err);
-    res.status(500).json({ error: 'Failed to submit review' });
+    
+    // Create simpler error response
+    res.status(500).json({ 
+      error: 'Failed to submit review', 
+      message: err.message
+    });
   }
 });
 

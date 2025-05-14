@@ -213,24 +213,68 @@ const Dashboard = () => {
 
   const handleReview = async (rating, comment) => {
     try {
+      // Validate required data before proceeding
       if (!selectedCompany?.transactionId) {
         console.error('Transaction ID is missing for review submission:', selectedCompany);
         setError('Transaction ID is missing. Cannot submit review.');
         return;
       }
       
+      // Validate comment is not empty
+      if (!comment || comment.trim() === '') {
+        console.error('Review comment cannot be empty');
+        setError('Please enter a comment for your review.');
+        return;
+      }
+      
+      // Validate rating is valid
+      if (!rating || rating < 1 || rating > 5) {
+        console.error('Invalid rating value:', rating);
+        setError('Please select a rating between 1 and 5 stars.');
+        return;
+      }
+      
+      // Ensure user is logged in
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        const noUserError = 'You need to be logged in to submit a review.';
+        console.error(noUserError);
+        setError(noUserError);
+        return;
+      }
+      
       const transactionId = selectedCompany.transactionId;
+      
+      // Log user and transaction data for debugging
+      console.log('Review submission context:', {
+        userId: JSON.parse(userData).id || JSON.parse(userData)._id,
+        userRoles: JSON.parse(userData).roles,
+        transactionId
+      });
       console.log('Submitting review for transaction ID:', transactionId);
       
       // Close modal first to give immediate feedback
       setShowReviewModal(false);
       
-      // Submit the review
-      const response = await axios.post('http://localhost:4000/api/reviews', {
-        transactionId: transactionId,
-        rating,
-        comment
-      });
+      // Get fresh token to ensure auth is valid
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      // Submit the review with explicit authorization header
+      const response = await axios.post('http://localhost:4000/api/reviews', 
+        {
+          transactionId: transactionId,
+          rating,
+          comment
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
       console.log('Review submitted successfully for transaction ID:', transactionId, response.data);
       
       // Clear any existing transactions to avoid showing stale data temporarily
@@ -249,8 +293,26 @@ const Dashboard = () => {
       }, 500);
     } catch (err) {
       console.error('Review submission error:', err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || 'Failed to submit review';
-      setError(errorMessage);
+      
+      // Extract all available error details
+      const errorData = err.response?.data;
+      const errorMessage = errorData?.error || 'Failed to submit review';
+      const errorDetails = errorData?.message 
+        ? `${errorMessage} - ${errorData.message}` 
+        : errorMessage;
+      
+      // Log detailed error information for debugging
+      console.error('Full error details:', {
+        message: errorDetails,
+        details: errorData?.details,
+        stack: errorData?.stack
+      });
+      
+      // Display the error in an alert with more details if available
+      alert(`Review submission error: ${errorDetails}`);
+      
+      // Also set the error state
+      setError(errorDetails);
       
       // If the error is due to an already submitted review, we should refresh to show current state
       if (errorMessage.includes('already reviewed')) {

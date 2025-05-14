@@ -21,7 +21,9 @@ module.exports = (req, res, next) => {
     // Log a masked version of the token for debugging
     if (token.length > 10) {
       console.log(`[${new Date().toISOString()}] AUTH: Token received (first 10 chars): ${token.substring(0, 10)}...`);
-    }    try {
+    }
+    
+    try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       console.log(`[${new Date().toISOString()}] AUTH: Token verified successfully for user ID: ${decoded.id}`);
       
