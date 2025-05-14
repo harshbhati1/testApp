@@ -262,11 +262,21 @@ const Dashboard = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
+      // Ensure rating is a number and log it
+      const numericRating = parseInt(rating, 10);
+      if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+        console.error('Invalid rating before submission:', rating);
+        setError('Invalid rating value. Please select between 1-5 stars.');
+        return;
+      }
+      
+      console.log('Sending review with rating:', numericRating, 'Type:', typeof numericRating);
+      
       // Submit the review with explicit authorization header
       const response = await axios.post('http://localhost:4000/api/reviews', 
         {
           transactionId: transactionId,
-          rating,
+          rating: numericRating, // Explicitly send as a number
           comment
         },
         {

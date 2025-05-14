@@ -107,12 +107,11 @@ const Profile = () => {
             <p className="text-gray-600">{profile.industry}</p>
             {profile.averageRating > 0 && (
               <div className="flex items-center mt-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
+                <div className="flex">                  {[1, 2, 3, 4, 5].map((star) => (
                     <span
-                      key={i}
+                      key={star}
                       className={`text-yellow-400 ${
-                        i < Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-300'
+                        star <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-300'
                       }`}
                     >
                       ★
@@ -142,15 +141,12 @@ const Profile = () => {
                     className="flex items-center space-x-2 hover:text-blue-600"
                   >
                     <span className="font-medium">{review.reviewer.name}</span>
-                  </Link>
-                  <div className="flex items-center">
+                  </Link>                  <div className="flex items-center">
                     <div className="flex">
-                      {[...Array(5)].map((_, i) => (
+                      {[1, 2, 3, 4, 5].map((star) => (
                         <span
-                          key={i}
-                          className={`text-yellow-400 ${
-                            i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                          }`}
+                          key={star}
+                          className={star <= Number(review.rating) ? 'text-yellow-400' : 'text-gray-300'}
                         >
                           ★
                         </span>

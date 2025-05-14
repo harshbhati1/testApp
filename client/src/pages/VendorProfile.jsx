@@ -110,7 +110,7 @@ export default function VendorProfile() {
                     <span 
                       key={star}
                       className={`text-xl ${
-                        star <= company.averageRating 
+                        star <= Number(company.averageRating) 
                           ? 'text-yellow-400' 
                           : 'text-gray-300'
                       }`}
@@ -157,7 +157,7 @@ export default function VendorProfile() {
                         <span 
                           key={star}
                           className={`text-lg ${
-                            star <= review.rating 
+                            star <= Number(review.rating) 
                               ? 'text-yellow-400' 
                               : 'text-gray-300'
                           }`}

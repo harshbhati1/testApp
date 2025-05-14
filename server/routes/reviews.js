@@ -62,6 +62,19 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'You have already reviewed this transaction' });
     }
     
+    // Ensure the rating is properly converted to a number and validated
+    const numericRating = parseInt(rating, 10);
+    
+    // Validate the rating is within bounds
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+      return res.status(400).json({ 
+        error: 'Invalid rating value',
+        details: `Rating must be between 1 and 5, received: ${rating}` 
+      });
+    }
+    
+    console.log(`Converting rating ${rating} (${typeof rating}) to numeric: ${numericRating}`);
+    
     // Create review document with BOTH field sets to handle schema mismatch
     const review = new Review({
       // Current schema fields
@@ -73,7 +86,7 @@ router.post('/', requireAuth, async (req, res) => {
       userId: userId,
       transactionId: transactionId,
       
-      rating: Number(rating),
+      rating: numericRating, // Use the validated numeric rating
       comment: comment
     });
 
@@ -136,7 +149,15 @@ router.get('/company/:companyId', async (req, res) => {
       .populate('reviewer', 'name')
       .populate('transaction', 'amount')
       .sort({ createdAt: -1 });
-    res.json(reviews);
+    
+    // Explicitly ensure ratings are numeric
+    const formattedReviews = reviews.map(review => {
+      const reviewObj = review.toObject();
+      reviewObj.rating = Number(reviewObj.rating); // Ensure rating is a number
+      return reviewObj;
+    });
+    
+    res.json(formattedReviews);
   } catch (err) {
     console.error('Get reviews error:', err);
     res.status(500).json({ error: 'Failed to fetch reviews' });

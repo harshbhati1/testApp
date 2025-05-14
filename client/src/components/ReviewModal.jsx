@@ -7,11 +7,23 @@ const ReviewModal = ({ isOpen, company, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!rating || !comment.trim()) {
-      setError('Please provide both rating and comment');
+    
+    // Validate rating and comment
+    if (!rating || rating < 1 || rating > 5) {
+      setError('Please select a rating between 1 and 5 stars');
       return;
     }
-    onSubmit(rating, comment);
+    
+    if (!comment.trim()) {
+      setError('Please provide a comment');
+      return;
+    }
+    
+    // Log before submitting to check value
+    console.log('Submitting review with rating:', rating, 'Type:', typeof rating);
+    
+    // Pass the numeric rating and comment to parent component
+    onSubmit(Number(rating), comment);
   };
 
   if (!isOpen) return null;
@@ -37,7 +49,10 @@ const ReviewModal = ({ isOpen, company, onClose, onSubmit }) => {
                 <button
                   key={star}
                   type="button"
-                  onClick={() => setRating(star)}
+                  onClick={() => {
+                    console.log('Star clicked:', star);
+                    setRating(star);
+                  }}
                   className={`text-2xl ${
                     star <= rating ? 'text-yellow-400' : 'text-gray-300'
                   }`}
@@ -45,6 +60,9 @@ const ReviewModal = ({ isOpen, company, onClose, onSubmit }) => {
                   ★
                 </button>
               ))}
+              <span className="ml-2 text-sm text-gray-600">
+                {rating} {rating === 1 ? 'Star' : 'Stars'}
+              </span>
             </div>
           </div>
 

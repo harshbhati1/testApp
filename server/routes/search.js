@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
           .lean();
 
         const averageRating = reviews.length > 0
-          ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+          ? reviews.reduce((acc, review) => acc + Number(review.rating), 0) / reviews.length
           : 0;
 
         return {
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
           role: user.roles[0],
           reviews: reviews.map(review => ({
             id: review._id,
-            rating: review.rating,
+            rating: Number(review.rating),
             comment: review.comment,
             reviewer: {
               id: review.reviewer?._id,
@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
         .lean();
 
       const averageRating = reviews.length > 0
-        ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+        ? reviews.reduce((acc, review) => acc + Number(review.rating), 0) / reviews.length
         : 0;
 
       return {
@@ -134,7 +134,7 @@ router.get('/:id', async (req, res) => {
     console.log('Found reviews:', reviews);
 
     const averageRating = reviews.length > 0
-      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      ? reviews.reduce((acc, review) => acc + Number(review.rating), 0) / reviews.length
       : 0;
 
     const formattedUser = {

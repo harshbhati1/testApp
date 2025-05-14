@@ -120,11 +120,11 @@ const Home = () => {
                   {user.averageRating > 0 && (
                     <div className="flex items-center mt-1">
                       <div className="flex">
-                        {[...Array(5)].map((_, i) => (
+                        {[1, 2, 3, 4, 5].map((star) => (
                           <span
-                            key={i}
+                            key={star}
                             className={`text-yellow-400 ${
-                              i < Math.round(user.averageRating) ? 'text-yellow-400' : 'text-gray-300'
+                              star <= Math.round(user.averageRating) ? 'text-yellow-400' : 'text-gray-300'
                             }`}
                           >
                             ★
