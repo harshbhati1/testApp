@@ -1,47 +1,44 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-const auth = async (req, res, next) => {
+module.exports = (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] AUTH: Entered for ${req.method} ${req.originalUrl}`);
   try {
-    // Get token from header
+    // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    console.log('Auth header:', authHeader);
-
+    console.log(`[${new Date().toISOString()}] AUTH: Auth header: ${authHeader ? 'Present' : 'Missing or undefined'}`);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No valid auth header found');
-      return res.status(401).json({ error: 'Authentication required' });
+      console.log(`[${new Date().toISOString()}] AUTH: Authorization header missing or invalid format.`);
+      return res.status(401).json({ error: 'No token provided. Please log in again.' });
     }
 
     const token = authHeader.split(' ')[1];
-    console.log('Token:', token);
-    
     if (!token) {
-      console.log('No token found');
-      return res.status(401).json({ error: 'Authentication required' });
+      console.log(`[${new Date().toISOString()}] AUTH: Token is empty after splitting.`);
+      return res.status(401).json({ error: 'Invalid token format. Please log in again.' });
     }
-
-    try {
+    
+    // Log a masked version of the token for debugging
+    if (token.length > 10) {
+      console.log(`[${new Date().toISOString()}] AUTH: Token received (first 10 chars): ${token.substring(0, 10)}...`);
+    }    try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Decoded token:', decoded);
+      console.log(`[${new Date().toISOString()}] AUTH: Token verified successfully for user ID: ${decoded.id}`);
       
-      const user = await User.findById(decoded.id);
-      console.log('Found user:', user ? user._id : 'null');
-
-      if (!user) {
-        console.log('User not found for ID:', decoded.id);
-        return res.status(401).json({ error: 'User not found' });
-      }
-
-      req.user = user;
+      // Ensure req.user has consistent id fields
+      req.user = {
+        ...decoded,
+        id: decoded.id || decoded._id, // Use either id or _id, ensuring 'id' is always set
+      };
+      
+      console.log(`[${new Date().toISOString()}] AUTH: req.user set. Proceeding to next middleware/route.`);
       next();
     } catch (err) {
-      console.error('Token verification error:', err);
-      return res.status(401).json({ error: 'Invalid token' });
+      console.error(`[${new Date().toISOString()}] AUTH: Token verification error: ${err.message}`, err);
+      return res.status(401).json({ error: 'Invalid token. Please log in again.' });
     }
   } catch (err) {
-    console.error('Auth middleware error:', err);
-    res.status(401).json({ error: 'Authentication failed' });
+    console.error(`[${new Date().toISOString()}] AUTH: Outer catch block error: ${err.message}`, err);
+    return res.status(500).json({ error: 'Authentication process failed' });
   }
 };
-
-module.exports = auth; 

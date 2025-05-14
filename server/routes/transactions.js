@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transaction');
 const requireAuth = require('../middleware/requireAuth');
-const auth = require('../middleware/auth');
 
 // Get user's transactions
 router.get('/', requireAuth, async (req, res) => {
+  console.log(`[${new Date().toISOString()}] TRANSACTIONS_ROUTE: Entered GET /transactions for user: ${req.user ? req.user.id : 'UNKNOWN USER'}`);
   try {
     console.log('GET /transactions - Processing request for user:', req.user.id);
     
@@ -250,7 +250,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 });
 
 // Get transactions for a specific user
-router.get('/user/:userId', auth, async (req, res) => {
+router.get('/user/:userId', requireAuth, async (req, res) => {
   try {
     const transactions = await Transaction.find({
       $or: [

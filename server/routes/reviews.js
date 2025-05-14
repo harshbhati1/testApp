@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const Transaction = require('../models/Transaction');
-const auth = require('../middleware/auth');
+const requireAuth = require('../middleware/requireAuth');
 
 // Submit a review
-router.post('/', auth, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { transactionId, rating, comment } = req.body;
     console.log('==========================================');

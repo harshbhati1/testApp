@@ -76,12 +76,15 @@ const Dashboard = () => {
       // Explicitly set Authorization header for this request
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
+      console.log('DEBUG - Headers being sent:', {
+        'Authorization': `Bearer ${token.substring(0, 10)}...`,
+        'Cache-Control': 'no-cache'
+      });
+      
+      // Simplified headers to avoid CORS issues
       const response = await axios.get('http://localhost:4000/api/transactions', {
         headers: {
-          'Authorization': `Bearer ${token}`, // Set again to be sure
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          'Authorization': `Bearer ${token}` // Only set the Authorization header
         },
         params: { // Adding a unique parameter to prevent URL-based caching
           _t: new Date().getTime(),
