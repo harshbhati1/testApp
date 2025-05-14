@@ -29,6 +29,23 @@ const Dashboard = () => {
     try {
       console.log('Fetching transactions...');
       
+      // DEBUGGING - Remove this in production
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          console.log('Current logged in user:', {
+            id: parsedUser.id || parsedUser._id,
+            email: parsedUser.email,
+            roles: parsedUser.roles
+          });
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
+      } else {
+        console.warn('No user data found in localStorage');
+      }
+      
       // Get token from localStorage to ensure it's fresh
       const token = localStorage.getItem('token');
       
@@ -43,12 +60,25 @@ const Dashboard = () => {
       // Log the token format for debugging (first few characters only)
       if (token && token.length > 10) {
         console.log('Using token (first 10 chars):', token.substring(0, 10) + '...');
+        
+        // Basic check if token looks like a valid JWT (has 3 parts separated by dots)
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          console.error('Token does not appear to be a valid JWT format (should have 3 parts)');
+          setError('Invalid authentication token format. Please log in again.');
+          setLoading(false);
+          return;
+        }
       }
       
       console.log('Making API request to fetch transactions...');
+      
+      // Explicitly set Authorization header for this request
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       const response = await axios.get('http://localhost:4000/api/transactions', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Set again to be sure
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
           'Expires': '0',

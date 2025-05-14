@@ -24,8 +24,14 @@ module.exports = (req, res, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Token verified successfully for user:', decoded.name || decoded.id);
-      req.user = decoded;
+      console.log('Token verified successfully for user ID:', decoded.id);
+      
+      // Ensure req.user has consistent id fields
+      req.user = {
+        ...decoded,
+        id: decoded.id || decoded._id, // Use either id or _id, ensuring 'id' is always set
+      };
+      
       next();
     } catch (err) {
       console.error('Token verification error:', err.message);

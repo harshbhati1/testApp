@@ -201,4 +201,17 @@ router.post('/create-test-vendor', async (req, res) => {
   }
 });
 
+// Endpoint to verify a token is valid (for debugging purposes)
+router.get('/verify-token', requireAuth, (req, res) => {
+  // If requireAuth middleware passes, token is valid
+  res.json({ 
+    valid: true, 
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+      roles: req.user.roles
+    }
+  });
+});
+
 module.exports = router; 

@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import VendorProfile from './pages/VendorProfile';
 import Profile from './pages/Profile';
 import ConnectionTest from './components/ConnectionTest';
+import TokenDebug from './pages/TokenDebug';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/test-connection" element={<ConnectionTest />} />
+            <Route path="/debug" element={<TokenDebug />} />
             <Route
               path="/dashboard"
               element={

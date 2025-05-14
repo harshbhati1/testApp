@@ -21,13 +21,17 @@ router.get('/', requireAuth, async (req, res) => {
     
     const { status } = req.query;
     
-    // Try both id and _id formats to be safe
-    const userId = req.user.id || req.user._id;
+    // Try both id and _id formats to be safe - provide a default if somehow both are missing
+    const userId = req.user.id || req.user._id || 'invalid-id';
     console.log('Looking for transactions with user ID:', userId);
     
     // Convert to string if it's an ObjectId
-    const userIdStr = userId.toString();
+    const userIdStr = String(userId);
     
+    // Debug what we're looking for
+    console.log(`Searching for transactions where supplierId or vendorId equals: ${userIdStr}`);
+    
+    // Create a query that handles various ID formats
     const query = {
       $or: [
         { supplierId: userId },
@@ -36,6 +40,9 @@ router.get('/', requireAuth, async (req, res) => {
         { vendorId: userIdStr }
       ]
     };
+    
+    // Log the MongoDB query we're executing
+    console.log('MongoDB query:', JSON.stringify(query));
 
     if (status) {
       query.status = status;

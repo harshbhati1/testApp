@@ -37,24 +37,52 @@ export const AuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, []);
-
   const login = async (email, password) => {
     try {
+      console.log('Attempting login for:', email);
+      
       const response = await axios.post('http://localhost:4000/api/auth/login', {
         email,
         password
       });
 
+      console.log('Login response received');
       const { token, user } = response.data;
+      
+      if (!token) {
+        console.error('No token received in login response');
+        return { 
+          success: false, 
+          error: 'No authentication token received from server'
+        };
+      }
+      
+      if (!user || (!user.id && !user._id)) {
+        console.error('Invalid user data received:', user);
+        return {
+          success: false,
+          error: 'Invalid user data received from server'
+        };
+      }
+      
+      console.log('Login successful for user:', user.email);
+      console.log('User roles:', user.roles);
+      
+      // Make sure user object has a consistent id property
+      const userWithConsistentId = {
+        ...user,
+        id: user.id || user._id // Ensure we always have an id property
+      };
       
       // Store token and user data
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(userWithConsistentId));
       
       // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('Authorization header set for future requests');
       
-      setUser(user);
+      setUser(userWithConsistentId);
       return { success: true };
     } catch (err) {
       console.error('Login error:', err);
