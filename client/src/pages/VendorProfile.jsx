@@ -152,6 +152,17 @@ export default function VendorProfile() {
               {reviews.map(review => (
                 <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">
                   <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                        <span className="text-sm text-gray-500">
+                          {review.role === 'supplier' ? 'S' : 'V'}
+                        </span>
+                      </div>
+                      <span className="text-gray-500 text-sm mr-4">
+                        {review.role === 'supplier' ? 'Anonymous Supplier' : 'Anonymous Vendor'}
+                      </span>
+                    </div>
+                    
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span 
@@ -166,9 +177,6 @@ export default function VendorProfile() {
                         </span>
                       ))}
                     </div>
-                    <span className="text-gray-500 text-sm">
-                      {review.role === 'supplier' ? 'Anonymous Supplier' : 'Anonymous Vendor'}
-                    </span>
                   </div>
                   <p className="text-gray-600">{review.comment}</p>
                 </div>

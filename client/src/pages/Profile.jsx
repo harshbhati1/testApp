@@ -134,14 +134,16 @@ const Profile = () => {
         {profile.reviews && profile.reviews.length > 0 ? (
           <div className="space-y-6">
             {profile.reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">
-                <div className="flex items-center justify-between mb-2">
+              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">                <div className="flex items-center justify-between mb-2">
                   <Link 
                     to={`/profile/${review.reviewer.id}`}
                     className="flex items-center space-x-2 hover:text-blue-600"
                   >
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                      <span className="text-sm text-gray-500">{review.reviewer.name?.[0]}</span>
+                    </div>
                     <span className="font-medium">{review.reviewer.name}</span>
-                  </Link>                  <div className="flex items-center">
+                  </Link><div className="flex items-center">
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <span

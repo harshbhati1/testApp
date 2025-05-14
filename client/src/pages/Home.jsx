@@ -114,18 +114,15 @@ const Home = () => {
                 )}
                 <div>
                   <h2 className="text-xl font-semibold text-gray-800">{user.name}</h2>
-                  <p className="text-gray-600">@{typeof user.username === 'string' ? user.username : (user.email ? user.email.split('@')[0] : '')}</p>
-                  <p className="text-gray-600 capitalize">{Array.isArray(user.role) ? user.role[0] : (typeof user.role === 'string' ? user.role : (user.role?.name || 'User'))}</p>
-                  <p className="text-gray-600">{typeof user.industry === 'string' ? user.industry : (user.industry?.name || 'Not specified')}</p>
+                  <p className="text-gray-600">{user.email}</p>
+                  
                   {user.averageRating > 0 && (
-                    <div className="flex items-center mt-1">
+                    <div className="flex items-center mt-2">
                       <div className="flex">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <span
                             key={star}
-                            className={`text-yellow-400 ${
-                              star <= Math.round(user.averageRating) ? 'text-yellow-400' : 'text-gray-300'
-                            }`}
+                            className={star <= Number(user.averageRating) ? 'text-yellow-400' : 'text-gray-300'}
                           >
                             ★
                           </span>
@@ -138,25 +135,6 @@ const Home = () => {
                   )}
                 </div>
               </div>
-              <p className="mt-4 text-gray-700 line-clamp-2">{user.description}</p>
-              {user.reviews && user.reviews.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Recent Reviews</h3>
-                  <div className="space-y-2">
-                    {user.reviews.slice(0, 2).map((review) => (
-                      <div key={review.id} className="text-sm">
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="ml-1 font-medium">{review.rating}</span>
-                          <span className="mx-2">•</span>
-                          <span className="text-gray-600">{review.reviewer?.name || ''}</span>
-                        </div>
-                        <p className="text-gray-700 mt-1 line-clamp-2">{review.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </Link>
           );
         })}

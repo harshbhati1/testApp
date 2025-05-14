@@ -134,14 +134,15 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { vendorId, amount, description } = req.body;
 
-    // Check if user is a supplier
-    if (!req.user.roles.includes('supplier')) {
-      return res.status(403).json({ error: 'Only suppliers can create payment requests' });
-    }
+    // Allow any user to create payment requests 
+    // (supplierId = requester, vendorId = recipient)
+    // We don't check roles anymore, as any user can send payment requests
+    
+    console.log('Creating transaction with supplier (requester):', req.user.id, 'vendor (recipient):', vendorId);
 
     const transaction = new Transaction({
-      supplierId: req.user.id,
-      vendorId,
+      supplierId: req.user.id,  // Current user is the requester
+      vendorId,                 // Target user is the recipient
       amount,
       description,
       status: 'pending'
@@ -181,13 +182,27 @@ router.patch('/:id', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid status change' });
     }
 
-    // Check role-based permissions
-    if (status === 'completed' && !req.user.roles.includes('vendor')) {
-      return res.status(403).json({ error: 'Only vendors can mark payments as completed' });
+    // Check transaction-role-based permissions based on the user's role in THIS transaction
+    // Only the recipient (vendorId) can mark as completed
+    if (status === 'completed' && transaction.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'Only the recipient of the request can mark payments as completed',
+        details: {
+          yourId: req.user.id,
+          transactionVendorId: transaction.vendorId.toString()
+        }
+      });
     }
 
-    if (status === 'confirmed' && !req.user.roles.includes('supplier')) {
-      return res.status(403).json({ error: 'Only suppliers can confirm payments' });
+    // Only the initiator (supplierId) can confirm the payment
+    if (status === 'confirmed' && transaction.supplierId.toString() !== req.user.id) {
+      return res.status(403).json({ 
+        error: 'Only the initiator of the request can confirm payments',
+        details: {
+          yourId: req.user.id,
+          transactionSupplierId: transaction.supplierId.toString()
+        }
+      });
     }
 
     // Update transaction status

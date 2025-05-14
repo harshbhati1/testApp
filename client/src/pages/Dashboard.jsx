@@ -349,7 +349,11 @@ const Dashboard = () => {
       return null; // Or some placeholder if user data isn't loaded
     }
 
-    if (transaction.status === 'pending' && user?.roles?.includes('vendor')) {
+    // Check if current user is the VENDOR in this transaction (the receiving party)
+    const isVendorInTransaction = String(user._id) === String(transaction.vendorId);
+
+    if (transaction.status === 'pending' && isVendorInTransaction) {
+      console.log('User is the VENDOR in this transaction (recipient of request)');
       return (
         <div className="space-x-2">
           <button
@@ -374,7 +378,11 @@ const Dashboard = () => {
       );
     }
 
-    if (transaction.status === 'completed' && user?.roles?.includes('supplier')) {
+    // Check if current user is the SUPPLIER in this transaction (the initiating party)
+    const isSupplierInTransaction = String(user._id) === String(transaction.supplierId);
+    
+    if (transaction.status === 'completed' && isSupplierInTransaction) {
+      console.log('User is the SUPPLIER in this transaction (initiator of request)');
       return (
         <button
           onClick={() => {
@@ -494,66 +502,63 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Supplier Section */}
-      {user?.roles?.includes('supplier') && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Request Payment</h2>
-          <form onSubmit={handleSearch} className="mb-4">
-            <div className="flex gap-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search vendors by name or username..."
-                className="flex-1 p-2 border rounded"
-              />
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                disabled={searchLoading}
-              >
-                {searchLoading ? 'Searching...' : 'Search'}
-              </button>
-            </div>
-          </form>
+      {/* Payment Request Section - Available to all users */}
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Send Payment Requests</h2>
+        <form onSubmit={handleSearch} className="mb-4">
+          <div className="flex gap-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for users by name..."
+              className="flex-1 p-2 border rounded"
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              disabled={searchLoading}
+            >
+              {searchLoading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+        </form>
 
-          {searched && searchResults.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
-              No vendors found. Try a different search term.
-            </div>
-          )}
+        {searched && searchResults.length === 0 && (
+          <div className="text-center py-4 text-gray-500">
+            No users found. Try a different search term.
+          </div>
+        )}
 
-          {searchResults.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResults.map((vendor) => (
-                <div key={vendor.id} className="border rounded p-4">
-                  <div className="flex items-center gap-4 mb-4">
-                    {vendor.logo ? (
-                      <img src={vendor.logo} alt={vendor.name} className="w-16 h-16 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-2xl text-gray-500">{vendor.name[0]}</span>
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold">{vendor.name}</h3>
-                      <p className="text-sm text-gray-500">@{vendor.username}</p>
-                      <p className="text-sm text-gray-500">{vendor.industry}</p>
+        {searchResults.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {searchResults.map((user) => (
+              <div key={user.id} className="border rounded p-4">
+                <div className="flex items-center gap-4 mb-4">
+                  {user.logo ? (
+                    <img src={user.logo} alt={user.name} className="w-16 h-16 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-2xl text-gray-500">{user.name[0]}</span>
                     </div>
+                  )}
+                  <div>
+                    <h3 className="font-semibold">{user.name}</h3>
+                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="text-sm text-gray-500">Role: {user.role}</p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">{vendor.description}</p>
-                  <button
-                    onClick={() => handleRequest(vendor)}
-                    className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                  >
-                    Request Payment
-                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                <button
+                  onClick={() => handleRequest(user)}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Request Payment
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Transactions Section */}
       <div>

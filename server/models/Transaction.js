@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 
 const TransactionSchema = new mongoose.Schema({
+  // The supplierId is the user who initiated/requested the transaction (regardless of their roles)
   supplierId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
+  // The vendorId is the user who receives the transaction request (regardless of their roles)
   vendorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
