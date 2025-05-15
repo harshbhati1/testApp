@@ -536,11 +536,17 @@ const Dashboard = () => {
               <div key={user.id} className="border rounded p-4">
                 <div className="flex items-center gap-4 mb-4">
                   {user.logo ? (
-                    <img src={user.logo} alt={user.name} className="w-16 h-16 rounded-full object-cover" />
+                    <img src={user.logo} alt={user.name} className="w-16 h-16 rounded-full object-cover shadow-md" />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-2xl text-gray-500">{user.name[0]}</span>
-                    </div>
+                    <img 
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=128&rounded=true`}
+                      alt={user.name}
+                      className="w-16 h-16 rounded-full object-cover shadow-md"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=U&background=gray&color=fff&size=128&rounded=true`;
+                      }}
+                    />
                   )}
                   <div>
                     <h3 className="font-semibold">{user.name}</h3>
@@ -585,6 +591,24 @@ const Dashboard = () => {
                     <tr key={transaction._id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
+                          {/* Display avatar for transaction party */}
+                          {otherParty?.logo ? (
+                            <img 
+                              src={otherParty.logo} 
+                              alt={otherParty?.name || 'Company'}
+                              className="w-10 h-10 rounded-full object-cover mr-3 shadow-sm" 
+                            />
+                          ) : (
+                            <img 
+                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(otherParty?.name || 'Unknown')}&background=random&color=fff&size=80&rounded=true`}
+                              alt={otherParty?.name || 'Company'}
+                              className="w-10 h-10 rounded-full object-cover mr-3 shadow-sm"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://ui-avatars.com/api/?name=C&background=gray&color=fff&size=80&rounded=true`;
+                              }}
+                            />
+                          )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {(() => {

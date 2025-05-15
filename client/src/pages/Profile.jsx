@@ -91,14 +91,19 @@ const Profile = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Header */}
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-        <div className="flex items-center space-x-6">
+      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">        <div className="flex items-center space-x-6">          {/* User profile avatar - using external UI Avatars API */}
           {profile.logo ? (
             <img src={profile.logo} alt={profile.name} className="w-24 h-24 rounded-full object-cover" />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-4xl text-gray-500">{profile.name?.[0]}</span>
-            </div>
+            <img 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random&color=fff&size=192&rounded=true`} 
+              alt={profile.name}
+              className="w-24 h-24 rounded-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null; // Prevent infinite error loop
+                e.target.src = `https://ui-avatars.com/api/?name=User&background=gray&color=fff&size=192&rounded=true`;
+              }}
+            />
           )}
           <div>
             <h1 className="text-3xl font-bold text-gray-800">{profile.name}</h1>
@@ -138,10 +143,11 @@ const Profile = () => {
                   <Link 
                     to={`/profile/${review.reviewer.id}`}
                     className="flex items-center space-x-2 hover:text-blue-600"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
-                      <span className="text-sm text-gray-500">{review.reviewer.name?.[0]}</span>
-                    </div>
+                  >                    <img 
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(review.reviewer.name)}&background=random&color=fff&size=64`} 
+                      alt={review.reviewer.name} 
+                      className="w-8 h-8 rounded-full mr-2" 
+                    />
                     <span className="font-medium">{review.reviewer.name}</span>
                   </Link><div className="flex items-center">
                     <div className="flex">

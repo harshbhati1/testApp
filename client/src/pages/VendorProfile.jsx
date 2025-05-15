@@ -94,11 +94,21 @@ export default function VendorProfile() {
         {/* Company Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex items-center gap-6 mb-6">
-            {company.logo && (
+            {company.logo ? (
               <img 
                 src={company.logo} 
                 alt={`${company.name} logo`}
-                className="w-24 h-24 rounded-full object-cover"
+                className="w-24 h-24 rounded-full object-cover shadow-md"
+              />
+            ) : (
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&background=random&color=fff&size=192&rounded=true`} 
+                alt={`${company.name} logo`}
+                className="w-24 h-24 rounded-full object-cover shadow-md"
+                onError={(e) => {
+                  e.target.onerror = null; 
+                  e.target.src = `https://ui-avatars.com/api/?name=C&background=gray&color=fff&size=192&rounded=true`;
+                }}
               />
             )}
             <div>
@@ -153,11 +163,11 @@ export default function VendorProfile() {
                 <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2">
-                        <span className="text-sm text-gray-500">
-                          {review.role === 'supplier' ? 'S' : 'V'}
-                        </span>
-                      </div>
+                      <img
+                        src={`https://ui-avatars.com/api/?name=${review.role === 'supplier' ? 'S' : 'V'}&background=${review.role === 'supplier' ? '4f46e5' : '7e22ce'}&color=fff&size=64&rounded=true`}
+                        alt={review.role === 'supplier' ? 'Supplier' : 'Vendor'}
+                        className="w-8 h-8 rounded-full mr-2 shadow-sm"
+                      />
                       <span className="text-gray-500 text-sm mr-4">
                         {review.role === 'supplier' ? 'Anonymous Supplier' : 'Anonymous Vendor'}
                       </span>
