@@ -29,6 +29,11 @@ router.post('/', requireAuth, async (req, res) => {
     const supplierId = transaction.supplierId.toString();
     const vendorId = transaction.vendorId.toString();
     
+    // Check if supplier and vendor are the same account (prevent self-reviews)
+    if (supplierId === vendorId) {
+      return res.status(400).json({ error: 'Self-reviews are not allowed' });
+    }
+    
     // Determine role and reviewed company
     let isSupplier = false;
     let isVendor = false;

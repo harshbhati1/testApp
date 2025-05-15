@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import UserAvatar from '../components/UserAvatar';
 
 const Profile = () => {
   const { id } = useParams();
@@ -91,20 +92,13 @@ const Profile = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Profile Header */}
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">        <div className="flex items-center space-x-6">          {/* User profile avatar - using external UI Avatars API */}
-          {profile.logo ? (
-            <img src={profile.logo} alt={profile.name} className="w-24 h-24 rounded-full object-cover" />
-          ) : (
-            <img 
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random&color=fff&size=192&rounded=true`} 
-              alt={profile.name}
-              className="w-24 h-24 rounded-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null; // Prevent infinite error loop
-                e.target.src = `https://ui-avatars.com/api/?name=User&background=gray&color=fff&size=192&rounded=true`;
-              }}
-            />
-          )}
+      <div className="bg-white rounded-lg shadow-lg p-8 mb-8">        <div className="flex items-center space-x-6">          {/* User profile avatar using UserAvatar component */}          <UserAvatar 
+            name={profile.name}
+            image={profile.logo}
+            size="lg"
+            background="consistent"
+            className="shadow-md"
+          />
           <div>
             <h1 className="text-3xl font-bold text-gray-800">{profile.name}</h1>
             <p className="text-gray-600">@{profile.email.split('@')[0]}</p>
@@ -112,16 +106,18 @@ const Profile = () => {
             <p className="text-gray-600">{profile.industry}</p>
             {profile.averageRating > 0 && (
               <div className="flex items-center mt-2">
-                <div className="flex">                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      className={`text-yellow-400 ${
-                        star <= Math.round(profile.averageRating) ? 'text-yellow-400' : 'text-gray-300'
-                      }`}
-                    >
-                      ★
-                    </span>
-                  ))}
+                <div className="flex">                  {[1, 2, 3, 4, 5].map((star) => {
+                    // Convert profile.averageRating to a number
+                    const rating = parseFloat(profile.averageRating);
+                    return (
+                      <span
+                        key={star}
+                        className={star <= rating ? 'text-yellow-400' : 'text-gray-300'}
+                      >
+                        ★
+                      </span>
+                    );
+                  })}
                 </div>
                 <span className="ml-2 text-gray-600">
                   ({profile.averageRating.toFixed(1)}) • {profile.reviewCount} reviews
@@ -139,26 +135,30 @@ const Profile = () => {
         {profile.reviews && profile.reviews.length > 0 ? (
           <div className="space-y-6">
             {profile.reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">                <div className="flex items-center justify-between mb-2">
-                  <Link 
+              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">                <div className="flex items-center justify-between mb-2">                  <Link 
                     to={`/profile/${review.reviewer.id}`}
                     className="flex items-center space-x-2 hover:text-blue-600"
-                  >                    <img 
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(review.reviewer.name)}&background=random&color=fff&size=64`} 
-                      alt={review.reviewer.name} 
-                      className="w-8 h-8 rounded-full mr-2" 
+                  >
+                    <UserAvatar 
+                      name={review.reviewer.name}
+                      image={review.reviewer.logo}
+                      size="xs"
+                      className="mr-2" 
                     />
                     <span className="font-medium">{review.reviewer.name}</span>
                   </Link><div className="flex items-center">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <span
-                          key={star}
-                          className={star <= Number(review.rating) ? 'text-yellow-400' : 'text-gray-300'}
-                        >
-                          ★
-                        </span>
-                      ))}
+                    <div className="flex">                      {[1, 2, 3, 4, 5].map((star) => {
+                        // Convert review.rating to a number and check if star should be filled
+                        const rating = parseFloat(review.rating);
+                        return (
+                          <span
+                            key={star}
+                            className={star <= rating ? 'text-yellow-400' : 'text-gray-300'}
+                          >
+                            ★
+                          </span>
+                        );
+                      })}
                     </div>
                     <span className="ml-2 text-gray-600">{review.rating}</span>
                   </div>

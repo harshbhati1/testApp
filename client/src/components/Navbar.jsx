@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import UserAvatar from './UserAvatar';
 
 const Navbar = () => {
   const { user, loading, logout } = useAuth();
@@ -29,12 +30,14 @@ const Navbar = () => {
           <Link to="/" className="text-gray-600 hover:text-purple-600">Home</Link>
           {user ? (
             <>
-              <Link to="/dashboard" className="text-gray-600 hover:text-purple-600">Dashboard</Link>
-              <div className="flex items-center gap-2">
-                <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=64`}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full"
+              <Link to="/dashboard" className="text-gray-600 hover:text-purple-600">Dashboard</Link>              <div className="flex items-center gap-2">                <UserAvatar
+                  name={user.name} 
+                  image={null} // Force using generated avatar
+                  size="xs"
+                  background="consistent"
+                  bold={true} 
+                  rounded={true}
+                  className="shadow-sm"
                 />
                 <button
                   onClick={handleLogout}

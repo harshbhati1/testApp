@@ -134,6 +134,12 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { vendorId, amount, description } = req.body;
 
+    // Prevent users from sending payment requests to themselves
+    if (req.user.id === vendorId || (req.user._id && req.user._id.toString() === vendorId)) {
+      console.log('Self-request attempt prevented:', req.user.id, 'trying to send to', vendorId);
+      return res.status(400).json({ error: 'You cannot send a payment request to yourself' });
+    }
+
     // Allow any user to create payment requests 
     // (supplierId = requester, vendorId = recipient)
     // We don't check roles anymore, as any user can send payment requests

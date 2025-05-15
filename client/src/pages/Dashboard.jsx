@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import RequestModal from '../components/RequestModal';
 import ReviewModal from '../components/ReviewModal';
+import UserAvatar from '../components/UserAvatar';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -171,14 +172,26 @@ const Dashboard = () => {
       setSearchLoading(false);
     }
   };
-
   const handleRequest = (vendor) => {
+    // Check if user is trying to send a request to themselves
+    if (user && (vendor.id === user.id || vendor.id === user._id)) {
+      setError("You cannot send a payment request to yourself");
+      return;
+    }
+    
     setSelectedVendor(vendor);
     setShowRequestModal(true);
   };
 
   const handleRequestSubmit = async (amount, description) => {
     try {
+      // Double-check that user is not sending request to themselves
+      if (user && (selectedVendor.id === user.id || selectedVendor.id === user._id)) {
+        setError("You cannot send a payment request to yourself");
+        setShowRequestModal(false);
+        return;
+      }
+      
       await axios.post('http://localhost:4000/api/transactions', {
         vendorId: selectedVendor.id,
         amount,
@@ -531,35 +544,32 @@ const Dashboard = () => {
         )}
 
         {searchResults.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {searchResults.map((user) => (
-              <div key={user.id} className="border rounded p-4">
-                <div className="flex items-center gap-4 mb-4">
-                  {user.logo ? (
-                    <img src={user.logo} alt={user.name} className="w-16 h-16 rounded-full object-cover shadow-md" />
-                  ) : (
-                    <img 
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=128&rounded=true`}
-                      alt={user.name}
-                      className="w-16 h-16 rounded-full object-cover shadow-md"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=U&background=gray&color=fff&size=128&rounded=true`;
-                      }}
-                    />
-                  )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">            {searchResults.map((searchUser) => (
+              <div key={searchUser.id} className="border rounded p-4">
+                <div className="flex items-center gap-4 mb-4">                  <UserAvatar 
+                    name={searchUser.name}
+                    image={searchUser.logo}
+                    size="md" 
+                    background="consistent"
+                    className="shadow-md"
+                  />
                   <div>
-                    <h3 className="font-semibold">{user.name}</h3>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                    <p className="text-sm text-gray-500">Role: {user.role}</p>
+                    <h3 className="font-semibold">{searchUser.name}</h3>
+                    <p className="text-sm text-gray-500">{searchUser.email}</p>
+                    <p className="text-sm text-gray-500">Role: {searchUser.role}</p>
+                  </div>                </div>
+                {user && (searchUser.id === user.id || searchUser.id === user._id) ? (
+                  <div className="w-full px-4 py-2 text-center text-gray-500 bg-gray-100 rounded">
+                    This is your profile
                   </div>
-                </div>
-                <button
-                  onClick={() => handleRequest(user)}
-                  className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Request Payment
-                </button>
+                ) : (
+                  <button
+                    onClick={() => handleRequest(searchUser)}
+                    className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
+                    Request Payment
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -590,25 +600,13 @@ const Dashboard = () => {
                   return (
                     <tr key={transaction._id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {/* Display avatar for transaction party */}
-                          {otherParty?.logo ? (
-                            <img 
-                              src={otherParty.logo} 
-                              alt={otherParty?.name || 'Company'}
-                              className="w-10 h-10 rounded-full object-cover mr-3 shadow-sm" 
-                            />
-                          ) : (
-                            <img 
-                              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(otherParty?.name || 'Unknown')}&background=random&color=fff&size=80&rounded=true`}
-                              alt={otherParty?.name || 'Company'}
-                              className="w-10 h-10 rounded-full object-cover mr-3 shadow-sm"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = `https://ui-avatars.com/api/?name=C&background=gray&color=fff&size=80&rounded=true`;
-                              }}
-                            />
-                          )}
+                        <div className="flex items-center">                          {/* Display avatar for transaction party using UserAvatar component */}                          <UserAvatar 
+                            name={otherParty?.name || 'Unknown'}
+                            image={otherParty?.logo}
+                            size="xs"
+                            background="consistent"
+                            className="mr-3"
+                          />
                           <div>
                             <div className="text-sm font-medium text-gray-900">
                               {(() => {
@@ -616,14 +614,10 @@ const Dashboard = () => {
                                   <Link to={`/profile/${otherParty.id}`} className="text-blue-600 hover:underline">{otherParty.name}</Link>
                                 ) : 'Unknown';
                               })()}
-                            </div>
-                            <div className="text-sm text-gray-500">{transaction.description}</div>
-                            {/* Debug info - can be removed in production */}
+                            </div>                            <div className="text-sm text-gray-500">{transaction.description}</div>
                             {transaction.status === 'confirmed' && (
                               <div className="text-xs text-gray-400 mt-1">
-                                {isSupplier ? "You're supplier" : "You're vendor"} • 
-                                S:{transaction.supplierReviewed ? '✓' : '✗'} 
-                                V:{transaction.vendorReviewed ? '✓' : '✗'}
+                                {isSupplier ? "You're the requester" : "You're the recipient"}
                               </div>
                             )}
                           </div>

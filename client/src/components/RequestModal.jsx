@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const RequestModal = ({ vendor, onClose, onSubmit }) => {
+const RequestModal = ({ vendor, onClose, onSubmit, error: externalError }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  
+  useEffect(() => {
+    if (externalError) {
+      setError(externalError);
+    }
+  }, [externalError]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -98,7 +104,8 @@ const RequestModal = ({ vendor, onClose, onSubmit }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              disabled={!!error && error.includes('yourself')}
+              className={`px-4 py-2 ${error && error.includes('yourself') ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'} text-white rounded-md`}
             >
               Submit Request
             </button>

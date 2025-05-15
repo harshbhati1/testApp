@@ -21,9 +21,37 @@ VSV is a public platform where companies can look up vendors, read anonymous rat
 ## UI Avatars Integration
 The application uses UI Avatars API to generate profile images and company logos:
 - Automatically generates avatars based on user or company names
-- Supports customizable options (colors, sizes, rounded corners)
-- Provides fallback handling for image loading errors
-- Implemented through a reusable UserAvatar component
+- Implements consistent color generation:
+  - Same user/company has the same avatar color across all application views
+  - Colors are deterministically generated from user/company names
+  - Ensures visual consistency for user identification across the platform
+- Supports extensive customization options:
+  - Multiple size presets (xs, sm, md, lg, xl, 2xl)
+  - Predefined color schemes (purple, blue, green, red, amber, teal, gray, dark, light)
+  - Custom background and text colors
+  - Control over avatar shape (rounded/square)
+  - Text customization (bold, character length)
+- Performance optimizations:
+  - Lazy loading support for images
+  - Error handling with graceful fallbacks
+  - Efficient React state management
+- Consistent styling across the application
+- Reusable components:
+  - `UserAvatar` component for displaying avatars
+  - `ReviewItem` component for consistent review display
+  - `avatars.js` utilities for generating avatar URLs
+
+### Avatar Utility Functions
+- `getAvatarUrl()`: Base function for generating avatar URLs
+- `getUserAvatar()`: User-specific avatar generation with consistent colors
+- `getCompanyAvatar()`: Company-specific avatar generation with consistent colors
+- `getReviewerAvatar()`: Reviewer avatar generation with anonymous support
+
+### Color Consistency
+The avatar system uses a deterministic color generation algorithm that ensures:
+- Each user/company gets a unique but consistent color across the entire application
+- Colors are derived from the user/company name using a hash function
+- The same user will have the same avatar appearance in profile pages, comments, transaction listings, and throughout the application
 
 ## Deployment
 - Frontend: https://vsv.vercel.app
